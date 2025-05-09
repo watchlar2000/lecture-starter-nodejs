@@ -1,5 +1,5 @@
-import { dbAdapter } from "../config/db.js";
-import { randomUUID } from "node:crypto";
+import { randomUUID } from 'node:crypto';
+import { dbAdapter } from '../config/db.js';
 
 class BaseRepository {
   constructor(collectionName) {
