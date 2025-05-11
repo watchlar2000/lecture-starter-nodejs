@@ -67,7 +67,7 @@ class UserController extends BaseController {
     this._handleResponse({
       data,
       res,
-      errorMessage: 'Something went wrong creating a user',
+      errorMessage: `Something went wrong creating ${this.entityName}`,
     });
     next();
   }

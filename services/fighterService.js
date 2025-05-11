@@ -7,6 +7,10 @@ class FighterService extends BaseService {
       repository: fighterRepository,
     });
   }
+
+  async findByName(name) {
+    return this.repository.getOne({ name });
+  }
 }
 
 const fighterService = new FighterService({ fighterRepository });
