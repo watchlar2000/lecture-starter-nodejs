@@ -29,12 +29,6 @@ const userValidationRules = {
   },
 };
 
-function isFieldsAllowed({ userData, userModel }) {
-  const allowedFields = new Set(Object.keys(userModel));
-  const providedFields = Object.keys(userData);
-  return providedFields.every((field) => allowedFields.has(field));
-}
-
 function validateUser(userData) {
   return validateInputs({
     inputs: userData,
@@ -42,4 +36,4 @@ function validateUser(userData) {
   });
 }
 
-export { isFieldsAllowed, validateUser };
+export { validateUser };

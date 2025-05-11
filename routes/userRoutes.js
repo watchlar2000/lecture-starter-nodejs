@@ -1,16 +1,13 @@
-import { Router } from 'express';
 import {
   createUserValid,
   updateUserValid,
 } from '../middlewares/user.validation.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { writeToResponseLocals } from '../utils/writeToResponseLocals.js';
+import { BaseController } from './baseRoute.js';
 
-class UserController {
+class UserController extends BaseController {
   constructor({ userService }) {
-    this.userService = userService;
-    this.router = Router();
-    this.initRoutes();
+    super({ service: userService, entityName: 'User' });
   }
 
   initRoutes() {
@@ -29,29 +26,10 @@ class UserController {
     this.router.delete('/:id', asyncHandler(this.delete.bind(this)));
   }
 
-  #updateResponseLocals(res) {
-    return writeToResponseLocals(res);
-  }
-
-  async #checkUserExists({ id, res }) {
-    const { setError } = this.#updateResponseLocals(res);
-    const user = await this.userService.findById(id);
-
-    if (!user) {
-      setError({
-        status: 404,
-        message: `User with id ${id} not found`,
-      });
-      return null;
-    }
-
-    return user;
-  }
-
   async #checkUniqueFields({ userData, res }) {
-    const { setError } = this.#updateResponseLocals(res);
+    const { setError } = this._updateResponseLocals(res);
     const { email, phone } = userData;
-    const isUserWithEmailExists = await this.userService.findByEmail(email);
+    const isUserWithEmailExists = await this.service.findByEmail(email);
 
     if (isUserWithEmailExists) {
       setError({
@@ -61,7 +39,7 @@ class UserController {
       return false;
     }
 
-    const isUserWithPhoneExists = await this.userService.findByPhone(phone);
+    const isUserWithPhoneExists = await this.service.findByPhone(phone);
 
     if (isUserWithPhoneExists) {
       setError({
@@ -74,45 +52,10 @@ class UserController {
     return true;
   }
 
-  async #handleResponse({ data, res, errorMessage }) {
-    const { setData, setError } = this.#updateResponseLocals(res);
-
-    if (!data) {
-      setError({
-        message: errorMessage,
-      });
-      return;
-    }
-
-    setData(data);
-    return;
-  }
-
-  async getAll(req, res, next) {
-    const users = await this.userService.findAll();
-    this.#handleResponse({
-      data: users,
-      res,
-      errorMessage: 'Something went wrong fetching users',
-    });
-    next();
-  }
-
-  async getById(req, res, next) {
-    const { id } = req.params;
-    const user = await this.findById(id);
-    this.#handleResponse({
-      data: user,
-      res,
-      errorMessage: `User with id ${id} not found`,
-    });
-    next();
-  }
-
   async create(req, res, next) {
-    const data = req.body;
+    const { body: userData } = req;
     const isUniqueFields = await this.#checkUniqueFields({
-      userData: data,
+      userData,
       res,
     });
 
@@ -120,49 +63,13 @@ class UserController {
       return next();
     }
 
-    const user = await this.userService.create(data);
-    this.#handleResponse({
-      data: user,
+    const data = await this.service.create(userData);
+    this._handleResponse({
+      data,
       res,
       errorMessage: 'Something went wrong creating a user',
     });
     next();
-  }
-
-  async update(req, res, next) {
-    const { id } = req.params;
-    const dataToUpdate = req.body;
-    const isUserExists = await this.#checkUserExists({ id, res });
-
-    if (!isUserExists) {
-      return next();
-    }
-
-    const user = await this.userService.update({ id, dataToUpdate });
-    this.#handleResponse({
-      data: user,
-      res,
-      errorMessage: 'Something went wrong updating the user',
-    });
-    next();
-  }
-
-  async delete(req, res, next) {
-    const { id } = req.params;
-    const user = await this.#checkUserExists({ id, res });
-
-    if (!user) {
-      return next();
-    }
-
-    await this.userService.delete(id);
-    const { setData } = this.#updateResponseLocals(res);
-    setData(user);
-    next();
-  }
-
-  getRouter() {
-    return this.router;
   }
 }
 

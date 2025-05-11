@@ -18,10 +18,16 @@ function isPasswordValid(password) {
   return isNonEmptyString(password) && password.length >= 4;
 }
 
+function isFieldsAllowed({ inputFields, model }) {
+  const allowedFields = new Set(Object.keys(model));
+  const providedFields = Object.keys(inputFields);
+  return providedFields.every((field) => allowedFields.has(field));
+}
+
 function validateField({ value, fieldName, rules }) {
   if (!rules[fieldName]) return null;
 
-  if (!value) {
+  if (!value && value !== 0) {
     return {
       field: fieldName,
       message: 'Field is required',
@@ -63,6 +69,7 @@ function respondWithValidationErrors({ res, next, errors = [] }) {
 }
 
 export {
+  isFieldsAllowed,
   isNonEmptyString,
   isPasswordValid,
   isPhoneValid,

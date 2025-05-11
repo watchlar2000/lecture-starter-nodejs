@@ -1,6 +1,9 @@
 import { USER } from '../models/user.js';
-import { respondWithValidationErrors } from '../validators/common.js';
-import { isFieldsAllowed, validateUser } from '../validators/user.validator.js';
+import {
+  isFieldsAllowed as isUserFieldsAllowed,
+  respondWithValidationErrors,
+} from '../validators/common.js';
+import { validateUser } from '../validators/user.validator.js';
 
 const createUserValid = (req, res, next) => {
   const { id, ...newUser } = USER;
@@ -18,9 +21,9 @@ const createUserValid = (req, res, next) => {
 const updateUserValid = (req, res, next) => {
   const { id, ...userModel } = USER;
   const { body: userData } = req;
-  const isProvidedFieldsAllowed = isFieldsAllowed({
-    userData,
-    userModel,
+  const isProvidedFieldsAllowed = isUserFieldsAllowed({
+    inputFields: userData,
+    model: userModel,
   });
 
   if (!isProvidedFieldsAllowed) {
