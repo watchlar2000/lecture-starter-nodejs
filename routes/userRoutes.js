@@ -71,6 +71,33 @@ class UserController extends BaseController {
     });
     next();
   }
+
+  async update(req, res, next) {
+    const { id } = req.params;
+    const { body: dataToUpdate } = req;
+    const isUserExists = await this._checkEntityExists({ id, res });
+
+    if (!isUserExists) {
+      return next();
+    }
+
+    const isUniqueFields = await this.#checkUniqueFields({
+      userData: dataToUpdate,
+      res,
+    });
+
+    if (!isUniqueFields) {
+      return next();
+    }
+
+    const data = await this.service.update({ id, dataToUpdate });
+    this._handleResponse({
+      data,
+      res,
+      errorMessage: `Something went wrong updating ${this.entityName}`,
+    });
+    next();
+  }
 }
 
 const router = ({ userService }) => {
