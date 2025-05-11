@@ -1,36 +1,19 @@
 import { userRepository } from '../repositories/userRepository.js';
+import { BaseService } from './baseService.js';
 
-class UserService {
+class UserService extends BaseService {
   constructor({ userRepository }) {
-    this.userRepository = userRepository;
-  }
-
-  async findAll() {
-    return this.userRepository.getAll();
-  }
-
-  async findById(id) {
-    return this.userRepository.getOne({ id });
+    super({
+      repository: userRepository,
+    });
   }
 
   async findByEmail(email) {
-    return this.userRepository.getOne({ email });
+    return this.repository.getOne({ email });
   }
 
   async findByPhone(phone) {
-    return this.userRepository.getOne({ phone });
-  }
-
-  async create(data) {
-    return this.userRepository.create(data);
-  }
-
-  async update({ id, dataToUpdate }) {
-    return this.userRepository.update(id, dataToUpdate);
-  }
-
-  async delete(id) {
-    return this.userRepository.delete(id);
+    return this.repository.getOne({ phone });
   }
 }
 
