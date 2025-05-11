@@ -19,7 +19,7 @@ function isPasswordValid(password) {
 }
 
 function validateField({ value, fieldName, rules }) {
-  if (!rules[fieldName]) null;
+  if (!rules[fieldName]) return null;
 
   if (!value) {
     return {
