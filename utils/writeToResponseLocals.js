@@ -1,4 +1,4 @@
-export const responseHelper = (res) => ({
+export const writeToResponseLocals = (res) => ({
   setData(data) {
     res.locals.data = data;
   },

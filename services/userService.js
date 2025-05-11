@@ -17,6 +17,10 @@ class UserService {
     return this.userRepository.getOne({ email });
   }
 
+  async findByPhone(phone) {
+    return this.userRepository.getOne({ phone });
+  }
+
   async create(data) {
     return this.userRepository.create(data);
   }

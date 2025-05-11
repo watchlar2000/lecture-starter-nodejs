@@ -4,7 +4,7 @@ import {
   updateUserValid,
 } from '../middlewares/user.validation.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { responseHelper } from '../utils/responseHelper.js';
+import { writeToResponseLocals } from '../utils/writeToResponseLocals.js';
 
 class UserController {
   constructor({ userService }) {
@@ -29,93 +29,134 @@ class UserController {
     this.router.delete('/:id', asyncHandler(this.delete.bind(this)));
   }
 
-  updateResponseLocals(res) {
-    return responseHelper(res);
+  #updateResponseLocals(res) {
+    return writeToResponseLocals(res);
   }
 
-  async getAll(req, res, next) {
-    const users = await this.userService.findAll();
-    const { setData } = this.updateResponseLocals(res);
-    setData(users);
-    next();
-  }
-
-  async getById(req, res, next) {
-    const { id } = req.params;
+  async #checkUserExists({ id, res }) {
+    const { setError } = this.#updateResponseLocals(res);
     const user = await this.userService.findById(id);
-    const { setData, setError } = this.updateResponseLocals(res);
 
     if (!user) {
       setError({
         status: 404,
         message: `User with id ${id} not found`,
       });
-    } else {
-      setData(user);
+      return null;
     }
 
+    return user;
+  }
+
+  async #checkUniqueFields({ userData, res }) {
+    const { setError } = this.#updateResponseLocals(res);
+    const { email, phone } = userData;
+    const isUserWithEmailExists = await this.userService.findByEmail(email);
+
+    if (isUserWithEmailExists) {
+      setError({
+        status: 400,
+        message: `User with email ${email} already exists`,
+      });
+      return false;
+    }
+
+    const isUserWithPhoneExists = await this.userService.findByPhone(phone);
+
+    if (isUserWithPhoneExists) {
+      setError({
+        status: 400,
+        message: `User with phone ${phone} already exists`,
+      });
+      return false;
+    }
+
+    return true;
+  }
+
+  async #handleResponse({ data, res, errorMessage }) {
+    const { setData, setError } = this.#updateResponseLocals(res);
+
+    if (!data) {
+      setError({
+        message: errorMessage,
+      });
+      return;
+    }
+
+    setData(data);
+    return;
+  }
+
+  async getAll(req, res, next) {
+    const users = await this.userService.findAll();
+    this.#handleResponse({
+      data: users,
+      res,
+      errorMessage: 'Something went wrong fetching users',
+    });
+    next();
+  }
+
+  async getById(req, res, next) {
+    const { id } = req.params;
+    const user = await this.findById(id);
+    this.#handleResponse({
+      data: user,
+      res,
+      errorMessage: `User with id ${id} not found`,
+    });
     next();
   }
 
   async create(req, res, next) {
     const data = req.body;
-    const { setData, setError } = this.updateResponseLocals(res);
-    const isUserWithEmailExists = await this.userService.findByEmail(
-      data.email,
-    );
+    const isUniqueFields = await this.#checkUniqueFields({
+      userData: data,
+      res,
+    });
 
-    if (isUserWithEmailExists) {
-      setError({
-        status: 400,
-        message: `User with email ${data.email} already exists`,
-      });
-      return next();
-    }
-
-    const isUserWithPhoneExists = await this.userService.findByPhone(
-      data.phone,
-    );
-
-    if (isUserWithPhoneExists) {
-      setError({
-        status: 400,
-        message: `User with phone ${data.phone} already exists`,
-      });
+    if (!isUniqueFields) {
       return next();
     }
 
     const user = await this.userService.create(data);
-
-    if (!user) {
-      setError({
-        message: 'Something went wrong creating a user',
-      });
-    } else {
-      setData(user);
-    }
-
+    this.#handleResponse({
+      data: user,
+      res,
+      errorMessage: 'Something went wrong creating a user',
+    });
     next();
   }
 
   async update(req, res, next) {
     const { id } = req.params;
     const dataToUpdate = req.body;
-    const user = await this.userService.update({ id, dataToUpdate });
-    const { setData, setError } = this.updateResponseLocals(res);
+    const isUserExists = await this.#checkUserExists({ id, res });
 
-    if (!user) {
-      setError({
-        message: 'Something went wrong updating a user',
-      });
-    } else {
-      setData(user);
+    if (!isUserExists) {
+      return next();
     }
+
+    const user = await this.userService.update({ id, dataToUpdate });
+    this.#handleResponse({
+      data: user,
+      res,
+      errorMessage: 'Something went wrong updating the user',
+    });
     next();
   }
 
   async delete(req, res, next) {
     const { id } = req.params;
-    const user = await this.userService.delete(id);
+    const user = await this.#checkUserExists({ id, res });
+
+    if (!user) {
+      return next();
+    }
+
+    await this.userService.delete(id);
+    const { setData } = this.#updateResponseLocals(res);
     setData(user);
     next();
   }
