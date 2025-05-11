@@ -47,7 +47,7 @@ function validateFighter(fighterData) {
 
 function normalizeFighterData(data) {
   const numericValues = new Set(['power', 'defense', 'health']);
-  return Object.entries(
+  return Object.fromEntries(
     Object.entries(data).map(([key, value]) => [
       key,
       numericValues.has(key) ? Number(value) : value,
