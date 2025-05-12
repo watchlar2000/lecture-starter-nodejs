@@ -44,7 +44,6 @@ class FighterController extends BaseController {
 
   async create(req, res, next) {
     const { body: fighterData } = req;
-    console.log(fighterData);
     const isUniqueFields = await this.#checkUniqueFields({
       fighterData,
       res,
