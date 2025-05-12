@@ -4,7 +4,7 @@ const responseMiddleware = (req, res, next) => {
   if (data?.error) {
     const statusCode = data.status || 500;
     return res.status(statusCode).json({
-      ...data,
+      error: true,
       message: data.message || 'Something went wrong',
     });
   }
