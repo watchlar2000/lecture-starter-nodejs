@@ -1,7 +1,7 @@
 const responseMiddleware = (req, res, next) => {
   const { data } = res.locals;
 
-  if (data.error) {
+  if (data?.error) {
     const statusCode = data.status || 500;
     return res.status(statusCode).json({
       ...data,
