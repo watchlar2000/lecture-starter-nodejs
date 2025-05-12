@@ -1,22 +1,55 @@
-import { Router } from "express";
-import { authService } from "../services/authService.js";
-import { responseMiddleware } from "../middlewares/response.middleware.js";
+import { Router } from 'express';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { writeToResponseLocals } from '../utils/writeToResponseLocals.js';
 
-const router = Router();
+class AuthController {
+  constructor({ authService }) {
+    this.authService = authService;
+    this.router = Router();
+    this.initRoutes();
+  }
 
-router.post(
-  "/login",
-  (req, res, next) => {
-    try {
-      // TODO: Implement login action (get the user if it exist with entered credentials)
-      res.data = data;
-    } catch (err) {
-      res.err = err;
-    } finally {
-      next();
+  initRoutes() {
+    this.router.post('/login', asyncHandler(this.login.bind(this)));
+  }
+
+  #updateResponseLocals(res) {
+    return writeToResponseLocals(res);
+  }
+
+  async _handleResponse({ data, res, errorMessage }) {
+    const { setData, setError } = this.#updateResponseLocals(res);
+
+    if (!data) {
+      setError({
+        status: 401,
+        message: errorMessage,
+      });
+      return;
     }
-  },
-  responseMiddleware
-);
+
+    setData(data);
+    return;
+  }
+
+  async login(req, res, next) {
+    const data = await this.authService.login(req.body);
+    this._handleResponse({
+      data,
+      res,
+      errorMessage: 'Invalid email or password',
+    });
+    next();
+  }
+
+  getRouter() {
+    return this.router;
+  }
+}
+
+const router = ({ authService }) => {
+  const controller = new AuthController({ authService });
+  return controller.getRouter();
+};
 
 export { router };
