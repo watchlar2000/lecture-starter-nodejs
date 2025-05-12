@@ -17,6 +17,12 @@ const initRoutes = (app) => {
   );
   app.use('/api/fights', fightRoutes);
   app.use('/api/auth', authRoutes({ authService }), responseMiddleware);
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({
+      error: true,
+      message: `API endpoint not found: ${req.originalUrl}`,
+    });
+  });
 };
 
 export { initRoutes };
