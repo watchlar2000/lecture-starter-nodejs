@@ -44,7 +44,11 @@ export function passwordManager(options = {}) {
         res(key.toString('hex'));
       });
     });
-    return hashedPassword === hash;
+
+    return crypto.timingSafeEqual(
+      Buffer.from(hashedPassword, 'hex'),
+      Buffer.from(hash, 'hex'),
+    );
   }
 
   return {
